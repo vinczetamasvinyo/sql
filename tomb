@@ -1,0 +1,42 @@
+select unnest(array[('1',2),('3',4)])
+
+
+create table teszt (
+	teszt_id serial primary key,
+	name_of_people varchar(64),
+	age integer	
+);
+
+select * from teszt
+
+insert into teszt(name_of_people,age)
+
+select unnest(array[('1',2),('3',4)])
+-----ez működik
+WITH data AS (
+    SELECT '{ {"alma", 2}, {"FONT", 2} }'::text[] AS arr
+)
+insert into teszt(name_of_people,age)
+SELECT 
+    arr[i][1] AS aspect, 
+    arr[i][2]::int AS preference
+FROM 
+    data, 
+    generate_subscripts((SELECT arr FROM data), 1) i
+;
+
+-------------------------
+WITH data AS (
+    SELECT array[array['1',2],array['3',4]] AS arr
+)
+--insert into teszt(name_of_people,age)
+select xmlconcat('<?xml version="1.1"?>',xmlelement(name foo,xmlforest(aspect as teszt1)))::text from (
+SELECT 
+    arr[i][1] AS aspect, 
+    arr[i][2]::int AS preference
+FROM 
+    data, 
+    generate_subscripts((SELECT arr FROM data), 1) i) t
+;
+
+SELECT xmlconcat('<?xml version="1.1"?><books/>', '<book/>');
