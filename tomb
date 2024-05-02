@@ -40,3 +40,10 @@ FROM
 ;
 
 SELECT xmlconcat('<?xml version="1.1"?><books/>', '<book/>');
+-----------------------------------
+--create type tesz_t as (s1 text, s2 text, s3 text);
+
+select * from unnest(
+	'{"(alma,banan,citrom)",
+"(alma2,banan2,citrom2)"
+}'::tesz_t[])
