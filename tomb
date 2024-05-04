@@ -47,3 +47,26 @@ select * from unnest(
 	'{"(alma,banan,citrom)",
 "(alma2,banan2,citrom2)"
 }'::tesz_t[])
+
+--json list to tabla
+select * from json_populate_recordset(null::tesz_t,'[{"s1":"valami1","s2":null,"s3":"valami3"}]')
+
+----------------xml tag-et készítő function.
+drop function create_xml_tag;
+create function create_xml_tag(tag_name text,xml_data text)
+returns text as $$
+declare sz text;
+begin
+		IF xml_data is null or xml_data='' then
+			sz='';
+		else
+			-- sz='<'||tag_name||'>'||xml_data||'</'||tag_name||'>';
+			sz=xmlelement(name tag_name,xml_data)::text;
+		end if;
+		return sz;
+end;$$
+LANGUAGE plpgsql;
+--------------------------------
+select *, create_xml_tag('alma',s1)||create_xml_tag('banan',s2)||create_xml_tag('citrom',s3)
+	from (
+select * from json_populate_recordset(null::tesz_t,'[{"s1":"valami1","s2":null,"s3":"valami3"}]')) t
