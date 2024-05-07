@@ -70,3 +70,6 @@ LANGUAGE plpgsql;
 select *, create_xml_tag('alma',s1)||create_xml_tag('banan',s2)||create_xml_tag('citrom',s3)
 	from (
 select * from json_populate_recordset(null::tesz_t,'[{"s1":"valami1","s2":null,"s3":"valami3"}]')) t
+
+
+select unnest(s.col[1:1]) from (select '{}'::text[] as col) s;
