@@ -1,0 +1,94 @@
+create table cim(
+	id serial primary key,
+	iranyitoszam varchar(4),
+	telepules varchar(30),
+	kozterulet varchar(100),
+	hazszam varchar(10),
+	guid_id varchar(64)
+);
+
+create table elem(
+	id serial primary key,
+	cimzett integer,
+	felado integer,
+	visszacim integer,
+	koteg_azonosito varchar(20),
+	nev varchar(30)
+);
+
+[
+{"iraszam":"1144",
+"telepules":"Budapest",
+"kozterulet":"Füredi",
+"hazszam":null,
+"guid":"a6dd2128-1466-4f4d-908f-4ce91396168f"
+},
+{"iraszam":"1130",
+"telepules":"Budapest",
+"kozterulet":"Váci utca",
+"hazszam":"11",
+"guid":"99f6c6ce-8ee4-4f81-abbd-ceaff9ae3085"
+}]
+
+insert into cim(iranyitoszam,telepules,kozterulet,hazszam,guid_id)
+select j.v->>'iraszam' as irszam, j.v->>'telepules' as telepules,j.v->>'kozterulet' as kozterulet ,j.v->>'hazszam' as hazszam, j.v->>'guid' as guid from 
+jsonb_array_elements('[
+{"iraszam":"1144",
+"telepules":"Budapest",
+"kozterulet":"Füredi",
+"hazszam":null,
+"guid":"2d7a3316-822e-4db1-9945-7b0efa7f62e7"
+},
+{"iraszam":"1130",
+"telepules":"Budapest",
+"kozterulet":"Váci utca",
+"hazszam":"11",
+"guid":"3cfec6b5-b740-4db9-84f3-bd49aa41e2b8"
+},
+{"iraszam":"1122",
+"telepules":"Budapest",
+"kozterulet":"megyeri utca",
+"hazszam":"11",
+"guid":"928c8082-5b06-46ce-993b-241d451eef8d"
+}]'::jsonb) as j(v)
+
+
+select t.v->>'nev' as nev, (select id from cim where guid_id=t.v->>'cimzett') as cimzett_id, (select id from cim where guid_id=t.v->>'felado') as felado_id from
+jsonb_array_elements('
+[{
+"cimzett":"2d7a3316-822e-4db1-9945-7b0efa7f62e7",
+"felado": "3cfec6b5-b740-4db9-84f3-bd49aa41e2b8",
+"visszacim":"928c8082-5b06-46ce-993b-241d451eef8d",
+"koteg_azonosito":"Vsfasdfl21",
+"nev":"Kis peter"
+}]'::jsonb) t(v)
+
+do $$
+declare
+	 r record;
+begin
+	for r in (select j.v->>'iraszam' as irszam, j.v->>'telepules' as telepules,j.v->>'kozterulet' as kozterulet ,j.v->>'hazszam' as hazszam, j.v->>'guid' as guid from 
+jsonb_array_elements('[
+{"iraszam":"1144",
+"telepules":"Budapest",
+"kozterulet":"Füredi",
+"hazszam":null,
+"guid":"2d7a3316-822e-4db1-9945-7b0efa7f62e7"
+},
+{"iraszam":"1130",
+"telepules":"Budapest",
+"kozterulet":"Váci utca",
+"hazszam":"11",
+"guid":"3cfec6b5-b740-4db9-84f3-bd49aa41e2b8"
+},
+{"iraszam":"1122",
+"telepules":"Budapest",
+"kozterulet":"megyeri utca",
+"hazszam":"11",
+"guid":"928c8082-5b06-46ce-993b-241d451eef8d"
+}]'::jsonb) as j(v))
+	loop
+		raise notice '%', r.irszam;
+	end loop;
+end;
+$$;
