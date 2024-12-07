@@ -1,0 +1,52 @@
+do $$
+	declare
+		json_text text;	
+		input_kotegszam varchar(20);
+		name1 varchar(20);
+		extract_elements jsonb;
+		r record;
+	begin
+		json_text:='{"kotegszam":"VJszapn","típus":"valmai","elements":[{"name":"vincze","cimzett":{"irszam":"1144","varos":"Ózd"}},{ "name":"kiss", "cimzett":{"irszam":"1144","varos":"Ózd"}}]}';
+		select j.spec->>'kotegszam' into input_kotegszam from (	select (json_text::jsonb) )as j(spec);
+		raise notice '%',input_kotegszam;
+		--select (select j.tec->>'name'::varchar(20) from (jsonb_array_elements(json_text::jsonb->>'elements')::jsonb as j(tec)) into name1;
+		select j.spec->>'elements' into extract_elements	from (	select (json_text::jsonb) )as j(spec);
+		raise notice '%', extract_elements;
+		for r in (select jsonb_array_elements(extract_elements) element)
+    	loop
+        	raise notice '%', r.element->'cimzett'->'varos';
+    	end loop;
+	end;
+$$;	
+
+
+
+"cimzett":{"iranyitoszam":"1144","telepules":"Ózd","kozterulet"}
+
+
+select * from cim
+
+----- egy adott rekordot szúr be a cimzett majd az elem táblába.	
+with cte_cimzett as (
+insert into cim(iranyitoszam,telepules,kozterulet,hazszam)
+values ('1144','budapest','nap','11')	
+RETURNING  id),
+cte_felado as (
+insert into cim(iranyitoszam,telepules,kozterulet,hazszam)
+values ('3560','budapest','nap','11')	
+RETURNING  id),	
+cte_visszacim as (
+insert into cim(iranyitoszam,telepules,kozterulet,hazszam)
+values ('3560','budapest','nap','11')	
+RETURNING  id)
+insert into elem (cimzett,felado,visszacim,koteg_azonosito,nev)
+select (select id from cte_cimzett), (select id from cte_felado),(select id from cte_visszacim), 'VASASDf','Vincze Tamás';
+		
+
+
+select * from elem
+
+{
+"nev":"Kis pist",
+"cimzett_iranyitoszam":
+}
