@@ -1,0 +1,12 @@
+DO
+$BODY$
+DECLARE
+    omgjson json := '[{ "type": false }, { "type": "photo" }, {"type": "comment" }]';
+    i json;
+BEGIN
+  FOR i IN SELECT * FROM json_array_elements(omgjson)
+  LOOP
+    RAISE NOTICE 'output from space %', i->>'type';
+  END LOOP;
+END;
+$BODY$ language plpgsql
