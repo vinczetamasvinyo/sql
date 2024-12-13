@@ -1,0 +1,60 @@
+do $$
+	declare
+		json_text text;	
+		input_kotegszam varchar(20);
+		name1 varchar(20);
+		extract_elements jsonb;
+		r record;
+		iranyitoszam varchar(10);
+		insert_koteg_id integer;
+		i jsonb;
+	begin
+		json_text:='[{"kotegszam":"VJszapn1","típus":"valmai","elements":[{"name":"vincze Tamás","cimzett":{"iranyitoszam":"1144","telepules":"Ózd","kozterulet":"valami utca","hazszam":"121"},
+	"felado":{"iranyitoszam":"1144","telepules":"Ózd","kozterulet":"valami utca","hazszam":"121"},
+	"visszacim":{"iranyitoszam":"3600","telepules":"budapest","kozterulet":"1212","hazszam":"111"}},
+	{"name":"Kist Pista","cimzett":{"iranyitoszam":"1100","telepules":"Budapest","kozterulet":"valami utca","hazszam":"121000"},
+	"felado":{"iranyitoszam":"1010","telepules":"Budapest 01","kozterulet":"valami utca","hazszam":"121"},
+	"visszacim":{"iranyitoszam":"3600","telepules":"budapest","kozterulet":"1212","hazszam":"111"}}]},
+	{"kotegszam":"VJszapn2","típus":"valmai","elements":[{"name":"vincze Tamás","cimzett":{"iranyitoszam":"1144","telepules":"Ózd","kozterulet":"valami utca","hazszam":"121"},
+	"felado":{"iranyitoszam":"1144","telepules":"Ózd","kozterulet":"valami utca","hazszam":"121"},
+	"visszacim":{"iranyitoszam":"3600","telepules":"budapest","kozterulet":"1212","hazszam":"111"}},
+	{"name":"Kist Pista","cimzett":{"iranyitoszam":"1100","telepules":"Budapest","kozterulet":"valami utca","hazszam":"121000"},
+	"felado":{"iranyitoszam":"1010","telepules":"Budapest 01","kozterulet":"valami utca","hazszam":"121"},
+	"visszacim":{"iranyitoszam":"3600","telepules":"budapest","kozterulet":"1212","hazszam":"111"}}]}]';
+	FOR i IN SELECT * FROM jsonb_array_elements(json_text::jsonb)
+  	LOOP    	
+		--	RAISE NOTICE 'output from space %', i;
+		select j.spec->>'kotegszam' into input_kotegszam from (	select (i) )as j(spec);
+		--raise notice '%',input_kotegszam;
+		--select (select j.tec->>'name'::varchar(20) from (jsonb_array_elements(json_text::jsonb->>'elements')::jsonb as j(tec)) into name1;
+		select j.spec->>'elements' into extract_elements	from (	select (i) )as j(spec);
+		--raise notice '%', extract_elements;
+		with cte_insert_koteg_id as (
+		insert into koteg_szallitas(koteg_name)
+		values (input_kotegszam)
+		returning id)	
+		select id into insert_koteg_id from cte_insert_koteg_id;
+		for r in (select jsonb_array_elements(extract_elements) element)
+    	loop
+        	--raise notice '%', r.element->'cimzett'->'iranyitoszam';
+			iranyitoszam := r.element->'cimzett'->>'iranyitoszam';
+			--raise notice 'kapott irányítószám:%',iranyitoszam;
+			with cte_cimzett as (
+			insert into cim(iranyitoszam,telepules,kozterulet,hazszam)
+			values (r.element->'cimzett'->>'iranyitoszam',r.element->'cimzett'->>'telepules',r.element->'cimzett'->>'kozterulet',r.element->'cimzett'->>'hazszam')	
+			RETURNING  id),
+			cte_felado as (
+			insert into cim(iranyitoszam,telepules,kozterulet,hazszam)
+			values (r.element->'felado'->>'iranyitoszam',r.element->'felado'->>'telepules',r.element->'felado'->>'kozterulet',r.element->'felado'->>'hazszam')	
+			RETURNING  id),	
+			cte_visszacim as (
+			insert into cim(iranyitoszam,telepules,kozterulet,hazszam)
+			values (r.element->'visszacim'->>'iranyitoszam',r.element->'visszacim'->>'telepules',r.element->'visszacim'->>'kozterulet',r.element->'visszacim'->>'hazszam')	
+			RETURNING  id)
+			insert into elem (cimzett,felado,visszacim,koteg_azonosito,nev)
+			select (select id from cte_cimzett), (select id from cte_felado),(select id from cte_visszacim), insert_koteg_id::varchar(10), r.element->'name';
+    	end loop;
+  	END LOOP;
+
+	end;
+$$;
