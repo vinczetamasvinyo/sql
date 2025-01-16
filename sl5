@@ -1,0 +1,141 @@
+
+
+create table bjegys(
+id bigserial primary key,
+b_type smallint not null,
+bn varchar(10) not null,
+batch varchar(16) not null,
+file_id bigint not null
+);
+
+
+create table b_files(
+id bigserial primary key,
+file_name Varchar(80));
+
+
+create table bankjegy_type (
+id serial primary key,
+name varchar(10)
+)
+
+insert into bankjegy_type(name)
+values ('2000');
+
+insert into bankjegy_type(name)
+values ('1000');
+
+
+select * from bjegys
+
+
+select * from b_files
+
+select count(*) from bjegys
+
+insert into bjegys(b_type,bn,batch)
+select 1, j.v->>'bn' as bnumber,j.v->>'batch' as batch from jsonb_array_elements(
+'[{"bn": "MA000000","batch":"asdfasdfasdf"},{"bn": "MA000012","batch":"asdfasdfasdf"}]'::jsonb) as j(v)
+
+select * from ('{"type":1000,
+"file":1212121212,
+"b_numbers":
+[
+{"bn": "MA000000","batch":"asdfasdfasdf"},
+{"bn": "MA000012","batch":"asdfasdfasdf"}]}'::jsonb) as b(a);
+
+select a.v->>'gy' from (select ('{"gy":"alma","b":"valami"}'::jsonb) )a(v)
+
+
+select ('{"gy":"alma","b":"valami"}'::jsonb)['gy']
+
+select ('{"type":1000,
+"file":1212121212,
+"b_numbers":
+[
+{"bn": "MA000000","batch":"asdfasdfasdf"},
+{"bn": "MA000012","batch":"asdfasdfasdf"}]}'::jsonb)['type']
+
+insert into bankjegy_type(name)
+values ('2000')
+
+select (input_json_text::jsonb) as j
+
+SELECT ('{"a": 1}'::jsonb)['a'];
+
+do $$
+
+declare
+	file_name_from_json varchar(80);
+	input_json_text text;
+	insert_file_id bigint;
+	b_array_from_json jsonb;
+	b_type_from_json varchar(10);
+begin
+	input_json_text:='{"type":2000,
+"file":1212121212,
+"b_numbers":
+[
+]}';
+
+	select b.a->>'file' into file_name_from_json from (select (input_json_text::jsonb)) as b(a);
+	raise notice 'file:%',file_name_from_json;
+	
+	insert into b_files(file_name)
+	values(file_name_from_json)
+	returning id into insert_file_id;
+	raise notice 'file_id:%',insert_file_id;	
+	
+	select (input_json_text::jsonb)['b_numbers'] into b_array_from_json;
+	select (input_json_text::jsonb)['type'] into b_type_from_json;
+
+	insert into bjegys(b_type,bn,batch,file_id)	
+	select  (select id from bankjegy_type where name=b_type_from_json) , j.v->>'bn' as bnumber,j.v->>'batch' as batch,insert_file_id from jsonb_array_elements(b_array_from_json) as j(v);
+	
+	--select (input_json_text::jsonb)['b_numbers']
+	--(select id from bankjegy_type where name=b_type_from_json)
+end;
+$$
+
+create or replace procedure insert_data(inpu_json jsonb)
+language plpgsql
+as $$
+declare
+	file_name_from_json varchar(80);
+	input_json_text text;
+	insert_file_id bigint;
+	b_array_from_json jsonb;
+	b_type_from_json varchar(10);
+begin
+	select b.a->>'file' into file_name_from_json from (select (inpu_json)) as b(a);
+	--raise notice 'file:%',file_name_from_json;
+	
+	insert into b_files(file_name)
+	values(file_name_from_json)
+	returning id into insert_file_id;
+	--raise notice 'file_id:%',insert_file_id;	
+	
+	select (inpu_json)['b_numbers'] into b_array_from_json;
+	select (inpu_json)['type'] into b_type_from_json;
+
+	insert into bjegys(b_type,bn,batch,file_id)	
+	select  (select id from bankjegy_type where name=b_type_from_json) , j.v->>'bn' as bnumber,j.v->>'batch' as batch,insert_file_id from jsonb_array_elements(b_array_from_json) as j(v);
+	
+
+end; $$
+
+
+do $$
+declare
+	input_json_text text;
+begin
+	input_json_text:='{"type":1000,
+"file":1212121212,
+"b_numbers":
+[
+{"bn": "MA000000","batch":"asdfasdfasdf"},
+{"bn": "MA000012","batch":"asdfasdfasdf"}]}';
+	call insert_data(input_json_text::jsonb);
+end;
+$$;
+
