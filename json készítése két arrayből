@@ -1,0 +1,47 @@
+do 
+$$
+declare 
+  input1 text[] := array['a','b','c'];
+  --input2 text[] := array['a','b','c'];
+  input2 text[] := array['valmai','3','4'];
+  first_json jsonb;
+begin
+  first_json:='{}';
+  for i in 1..cardinality(input1) loop    
+	begin
+		select jsonb_insert(first_json, array[input1[i]], to_jsonb(input2[i]::int)) into first_json;
+	EXCEPTION 
+		when others then
+		raise notice 'valmai';
+		select jsonb_insert(first_json, array[input1[i]], to_jsonb(input2[i])) into first_json;
+	end;
+	raise notice 'Index: %, value: %', i, input1[i];
+  end loop;
+  raise notice 'végső jason:%', first_json;
+end $$
+;
+
+create or replace function fn_create_json_from_arrays(input1 text[],input2 text[] ) returns jsonb as
+$$
+declare 
+	 first_json jsonb;
+begin
+	first_json:='{}';
+  for i in 1..cardinality(input1) loop    
+	begin
+		select jsonb_insert(first_json, array[input1[i]], to_jsonb(input2[i]::int)) into first_json;
+	EXCEPTION 
+		when others then
+		--raise notice 'valmai';
+		select jsonb_insert(first_json, array[input1[i]], to_jsonb(input2[i])) into first_json;
+	end;
+	--raise notice 'Index: %, value: %', i, input1[i];
+  end loop;
+  --raise notice 'végső jason:%', first_json;
+  return first_json;
+end
+$$
+language plpgsql
+
+
+select fn_create_json_from_arrays(array['a','b','c','d'],array['valmai','3','4','5'])
